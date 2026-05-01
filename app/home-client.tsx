@@ -249,12 +249,16 @@ export default function Home() {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'mp4';
     try {
       await ffmpeg.writeFile(`input.${ext}`, await fetchFile(file));
-      await ffmpeg.exec(['-i', `input.${ext}`, '-vn', '-ab', '128k', 'audio.mp3']);
+      await ffmpeg.exec(['-i', `input.${ext}`, '-vn', '-ar', '16000', '-ac', '1', '-ab', '48k', 'audio.mp3']);
       const data = await ffmpeg.readFile('audio.mp3');
       const formData = new FormData();
       formData.append('audio', new Blob([data as any], { type: 'audio/mp3' }));
       formData.append('duration', String(duration));
       const res = await fetch('/api/analyze', { method: 'POST', body: formData });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Server ${res.status}: ${errText}`);
+      }
       const result = await res.json();
       if (result.error) { alert(result.error); return; }
       if (result.zoomEvents?.length > 0) setZoomEvents(result.zoomEvents);
