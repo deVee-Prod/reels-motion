@@ -4,13 +4,20 @@ import OpenAI from 'openai';
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const cookie = req.headers.get('cookie') || '';
   if (!cookie.includes('session_access')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  let step = 'init';
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: 'OPENAI_API_KEY is not set on the server' }, { status: 500 });
+    }
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    step = 'formData';
     const formData = await req.formData();
     const audioBlob = formData.get('audio') as Blob;
     const videoDuration = parseFloat((formData.get('duration') as string) || '0');
@@ -19,7 +26,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No audio provided' }, { status: 400 });
     }
 
-    // Step 1: Whisper — get word-level timestamps
+    step = 'whisper';
     const audioFile = new File([audioBlob], 'audio.mp3', { type: 'audio/mp3' });
     const transcription = await openai.audio.transcriptions.create({
       file: audioFile,
@@ -33,12 +40,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No speech detected' }, { status: 400 });
     }
 
-    // Build word list with timestamps for GPT-4o
     const wordList = words
       .map(w => `[${w.start.toFixed(2)}-${w.end.toFixed(2)}s] ${w.word}`)
       .join('\n');
 
-    // Step 2: GPT-4o groups words into sentences and assigns zoom per sentence
+    step = 'gpt4o';
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -71,11 +77,11 @@ Zoom scale rules:
       max_tokens: 3000,
     });
 
+    step = 'parse';
     const raw = completion.choices[0].message.content || '[]';
     const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     let zoomEvents = JSON.parse(cleaned);
 
-    // Sanitize
     zoomEvents = (zoomEvents as Array<{ start: number; end: number; scale: number; text?: string }>)
       .filter(e => typeof e.start === 'number' && typeof e.end === 'number' && e.end > e.start)
       .sort((a, b) => a.start - b.start)
@@ -88,7 +94,10 @@ Zoom scale rules:
 
     return NextResponse.json({ zoomEvents });
   } catch (error: any) {
-    console.error('Analyze error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(`Analyze error at step [${step}]:`, error);
+    return NextResponse.json(
+      { error: `[${step}] ${error.message ?? String(error)}` },
+      { status: 500 }
+    );
   }
 }
