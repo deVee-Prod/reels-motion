@@ -3,6 +3,22 @@ import OpenAI from 'openai';
 
 export const maxDuration = 120;
 
+const SILENT_SCALES = [1.1, 1.2, 1.15, 1.25, 1.1, 1.3];
+
+function fillSilentRange(start: number, end: number, scaleOffset: number) {
+  const INTERVAL = 2.5;
+  const fills: { start: number; end: number; scale: number; text: string }[] = [];
+  let t = start;
+  let i = scaleOffset;
+  while (t < end - 0.3) {
+    const segEnd = Math.min(t + INTERVAL, end);
+    fills.push({ start: parseFloat(t.toFixed(3)), end: parseFloat(segEnd.toFixed(3)), scale: SILENT_SCALES[i % SILENT_SCALES.length], text: '(instrumental)' });
+    i++;
+    t = segEnd;
+  }
+  return fills;
+}
+
 export async function POST(req: Request) {
   const cookie = req.headers.get('cookie') || '';
   if (!cookie.includes('devee_auth=1')) {
@@ -36,8 +52,11 @@ export async function POST(req: Request) {
     });
 
     const words = transcription.words || [];
+
+    // If no speech at all, fill entire video with silent zoom events
     if (words.length === 0) {
-      return NextResponse.json({ error: 'No speech detected' }, { status: 400 });
+      const zoomEvents = fillSilentRange(0, videoDuration, 0);
+      return NextResponse.json({ zoomEvents });
     }
 
     const wordList = words
@@ -66,6 +85,7 @@ Zoom scale rules:
 - 1.25–1.35 = strong zoom in
 - Vary meaningfully: give important/emotional sentences higher zoom
 - Never assign the same scale twice in a row — always alternate
+- Never create a segment shorter than 0.8 seconds — group short words with adjacent phrases
 - Cover the full transcript from first word to last word`,
         },
         {
@@ -80,9 +100,9 @@ Zoom scale rules:
     step = 'parse';
     const raw = completion.choices[0].message.content || '[]';
     const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    let zoomEvents = JSON.parse(cleaned);
+    let zoomEvents = JSON.parse(cleaned) as Array<{ start: number; end: number; scale: number; text?: string }>;
 
-    zoomEvents = (zoomEvents as Array<{ start: number; end: number; scale: number; text?: string }>)
+    zoomEvents = zoomEvents
       .filter(e => typeof e.start === 'number' && typeof e.end === 'number' && e.end > e.start)
       .sort((a, b) => a.start - b.start)
       .map(e => ({
@@ -91,6 +111,36 @@ Zoom scale rules:
         scale: parseFloat(Math.max(1.0, Math.min(e.scale ?? 1.0, 1.5)).toFixed(3)),
         text: e.text || '',
       }));
+
+    // Merge segments shorter than 0.8s into their neighbor to avoid glitch-like rapid cuts
+    const MIN_DURATION = 0.8;
+    const merged: typeof zoomEvents = [];
+    for (const event of zoomEvents) {
+      if (merged.length > 0 && (event.end - event.start) < MIN_DURATION) {
+        merged[merged.length - 1] = { ...merged[merged.length - 1], end: event.end };
+      } else {
+        merged.push({ ...event });
+      }
+    }
+    zoomEvents = merged;
+
+    // Fill silent sections (no speech) with gentle periodic zoom events
+    const firstWord = words[0].start;
+    const lastWord = words[words.length - 1].end;
+    const firstEvent = zoomEvents[0];
+    const lastEvent = zoomEvents[zoomEvents.length - 1];
+    const extraEvents: typeof zoomEvents = [];
+
+    if (firstEvent && firstWord > 1.0) {
+      extraEvents.push(...fillSilentRange(0, firstWord, 0));
+    }
+    if (lastEvent && videoDuration - lastWord > 1.0) {
+      extraEvents.push(...fillSilentRange(lastWord, videoDuration, 2));
+    }
+
+    if (extraEvents.length > 0) {
+      zoomEvents = [...extraEvents, ...zoomEvents].sort((a, b) => a.start - b.start);
+    }
 
     // Close any gaps between consecutive events so zoom never drops to 1.0
     for (let i = 0; i < zoomEvents.length - 1; i++) {
