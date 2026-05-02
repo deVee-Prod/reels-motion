@@ -5,7 +5,7 @@ export const maxDuration = 120;
 
 export async function POST(req: Request) {
   const cookie = req.headers.get('cookie') || '';
-  if (!cookie.includes('session_access')) {
+  if (!cookie.includes('devee_auth=1')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -91,6 +91,14 @@ Zoom scale rules:
         scale: parseFloat(Math.max(1.0, Math.min(e.scale ?? 1.0, 1.5)).toFixed(3)),
         text: e.text || '',
       }));
+
+    // Close any gaps between consecutive events so zoom never drops to 1.0
+    for (let i = 0; i < zoomEvents.length - 1; i++) {
+      const nextStart = zoomEvents[i + 1].start;
+      if (nextStart > zoomEvents[i].end && nextStart > zoomEvents[i].start + 0.01) {
+        zoomEvents[i] = { ...zoomEvents[i], end: nextStart };
+      }
+    }
 
     return NextResponse.json({ zoomEvents });
   } catch (error: any) {
