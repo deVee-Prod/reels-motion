@@ -142,12 +142,26 @@ Zoom scale rules:
       zoomEvents = [...extraEvents, ...zoomEvents].sort((a, b) => a.start - b.start);
     }
 
-    // Close any gaps between consecutive events so zoom never drops to 1.0
+    // Handle gaps between consecutive events
+    const SILENT_GAP_THRESHOLD = 2.0; // gaps longer than this get animated zoom movement
+    const gapFills: typeof zoomEvents = [];
+
     for (let i = 0; i < zoomEvents.length - 1; i++) {
-      const nextStart = zoomEvents[i + 1].start;
-      if (nextStart > zoomEvents[i].end && nextStart > zoomEvents[i].start + 0.01) {
-        zoomEvents[i] = { ...zoomEvents[i], end: nextStart };
+      const gapStart = zoomEvents[i].end;
+      const gapEnd = zoomEvents[i + 1].start;
+      const gapDuration = gapEnd - gapStart;
+
+      if (gapDuration > SILENT_GAP_THRESHOLD) {
+        // Large gap (music/instrumental) → animated zoom movement
+        gapFills.push(...fillSilentRange(gapStart, gapEnd, i));
+      } else if (gapDuration > 0.01) {
+        // Small gap → extend previous event to meet next
+        zoomEvents[i] = { ...zoomEvents[i], end: gapEnd };
       }
+    }
+
+    if (gapFills.length > 0) {
+      zoomEvents = [...zoomEvents, ...gapFills].sort((a, b) => a.start - b.start);
     }
 
     return NextResponse.json({ zoomEvents });
