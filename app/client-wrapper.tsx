@@ -13,10 +13,7 @@ export default function ClientWrapper() {
         if (data.session && !error) {
           setAuthStatus('ok');
         } else {
-          supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: window.location.href },
-          });
+          window.location.href = 'https://devee-music.com';
         }
       });
     });
