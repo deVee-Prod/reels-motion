@@ -170,7 +170,7 @@ export default function Home() {
               zoom = curScale + (nextScale - curScale) * ((transD / 2 - toEnd) / (transD / 2));
             }
           } else if (!curSeg) {
-            if (prevSeg && nextSeg) {
+            if (prevSeg && nextSeg && transD > 0.01) {
               const progress = (t - prevSeg.end) / (nextSeg.start - prevSeg.end);
               zoom = prevScale + (nextScale - prevScale) * Math.max(0, Math.min(1, progress));
             } else if (prevSeg) {
