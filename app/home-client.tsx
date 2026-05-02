@@ -34,12 +34,19 @@ function buildFilterComplex(
   // Build full timeline with gap-filling
   const segs: Array<{ start: number; end: number; scale: number }> = [];
   let cursor = 0;
-  for (const e of sorted) {
-    if (e.start > cursor + 0.01) segs.push({ start: cursor, end: e.start, scale: effectiveScale(1.0, intensity, baseZoom) });
+  for (let i = 0; i < sorted.length; i++) {
+    const e = sorted[i];
+    if (e.start > cursor + 0.01) {
+      const prevScale = i > 0 ? effectiveScale(sorted[i - 1].scale, intensity, baseZoom) : effectiveScale(e.scale, intensity, baseZoom);
+      segs.push({ start: cursor, end: e.start, scale: prevScale });
+    }
     segs.push({ start: e.start, end: e.end, scale: effectiveScale(e.scale, intensity, baseZoom) });
     cursor = e.end;
   }
-  if (cursor < totalDuration - 0.01) segs.push({ start: cursor, end: totalDuration, scale: effectiveScale(1.0, intensity, baseZoom) });
+  if (cursor < totalDuration - 0.01) {
+    const lastScale = sorted.length > 0 ? effectiveScale(sorted[sorted.length - 1].scale, intensity, baseZoom) : effectiveScale(1.0, intensity, baseZoom);
+    segs.push({ start: cursor, end: totalDuration, scale: lastScale });
+  }
 
   // Expand into final segments (main + optional transition at each boundary)
   type Seg = { start: number; end: number; scale: number; transition?: { from: number; to: number } };
@@ -163,7 +170,14 @@ export default function Home() {
               zoom = curScale + (nextScale - curScale) * ((transD / 2 - toEnd) / (transD / 2));
             }
           } else if (!curSeg) {
-            zoom = getEffective(1.0);
+            if (prevSeg && nextSeg) {
+              const progress = (t - prevSeg.end) / (nextSeg.start - prevSeg.end);
+              zoom = prevScale + (nextScale - prevScale) * Math.max(0, Math.min(1, progress));
+            } else if (prevSeg) {
+              zoom = prevScale;
+            } else if (nextSeg) {
+              zoom = nextScale;
+            }
           }
 
           if (zoom > 1.001) {
