@@ -4,19 +4,19 @@ import dynamic from 'next/dynamic';
 
 const HomeClient = dynamic(() => import('./home-client'), { ssr: false });
 
+function hasDeVeeAuth() {
+  return document.cookie.split(';').some(c => c.trim() === 'devee_auth=1');
+}
+
 export default function ClientWrapper() {
   const [authStatus, setAuthStatus] = useState<'checking' | 'ok'>('checking');
 
   useEffect(() => {
-    import('./supabaseClient').then(({ supabase }) => {
-      supabase.auth.refreshSession().then(({ data, error }: { data: { session: unknown }, error: unknown }) => {
-        if (data.session && !error) {
-          setAuthStatus('ok');
-        } else {
-          window.location.href = 'https://devee-music.com';
-        }
-      });
-    });
+    if (hasDeVeeAuth()) {
+      setAuthStatus('ok');
+    } else {
+      window.location.href = 'https://devee-music.com';
+    }
   }, []);
 
   if (authStatus === 'checking') {
