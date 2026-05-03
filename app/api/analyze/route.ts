@@ -20,8 +20,9 @@ function fillSilentRange(start: number, end: number, scaleOffset: number) {
 }
 
 export async function POST(req: Request) {
-  const cookie = req.headers.get('cookie') || '';
-  if (!cookie.includes('devee_auth=1')) {
+  const { cookies } = await import('next/headers');
+  const store = await cookies();
+  if (store.get('session_access')?.value !== 'granted') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
