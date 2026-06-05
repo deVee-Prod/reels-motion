@@ -342,7 +342,7 @@ export default function Home() {
 
   if (!authorized) {
     return (
-      <div className="min-h-screen bg-[#050505] flex flex-col items-center text-center">
+      <div className="min-h-screen flex flex-col items-center text-center">
         <header className="space-y-2 pt-8 pb-6 relative">
           <div className="absolute top-6 left-1/2 -translate-x-1/2 w-56 h-20 bg-[#888888] blur-[55px] opacity-[0.25] pointer-events-none" />
           <Image src="/logo.png" alt="deVee" width={100} height={100} className="mx-auto relative rounded-full" />
@@ -366,7 +366,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center overflow-y-auto overflow-x-hidden">
+    <div className="min-h-screen text-white flex flex-col items-center overflow-y-auto overflow-x-hidden">
       <header className="text-center space-y-2 pt-8 pb-6 relative">
         <div className="absolute top-6 left-1/2 -translate-x-1/2 w-56 h-20 bg-[#888888] blur-[55px] opacity-[0.20] pointer-events-none" />
         <Image src="/logo.png" alt="deVee" width={72} height={72} className="opacity-85 mx-auto relative rounded-full" />
