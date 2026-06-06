@@ -12,7 +12,7 @@ export function ToolHeader() {
 
   return (
     <>
-      <header dir="ltr" className="absolute left-0 right-0 top-0 z-30 flex items-center justify-between px-6 py-4" style={{ paddingTop: 'env(safe-area-inset-top, 1rem)' }}>
+      <header dir="ltr" className="absolute left-0 right-0 top-0 z-30 flex items-center justify-between px-6 py-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/deVee Sign Transperent-1.png"
@@ -41,7 +41,7 @@ export function ToolHeader() {
           menuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <nav className="flex flex-col items-center justify-start h-full space-y-8 pt-24">
+        <nav className="flex flex-col items-center justify-start h-full space-y-8 pt-24" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <a
             href="https://devee-music.com"
             target="_blank"
