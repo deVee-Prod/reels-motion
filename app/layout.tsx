@@ -4,6 +4,7 @@ import "./globals.css";
 import { DriftingGridBackground } from './components/DriftingGridBackground';
 import { ToolHeader } from './components/ToolHeader';
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
