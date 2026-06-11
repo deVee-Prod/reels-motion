@@ -149,6 +149,11 @@ export default function Home() {
   const snapSpeedRef = useRef(1.0);
   const motionRef = useRef('static');
   const hasAutoAnalyzed = useRef(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isDraggingRef = useRef(false);
+  const durationRef = useRef(0);
+
+  useEffect(() => { durationRef.current = duration; }, [duration]);
 
   useEffect(() => { zoomEventsRef.current = zoomEvents; }, [zoomEvents]);
   useEffect(() => { intensityRef.current = intensityScale; }, [intensityScale]);
@@ -270,7 +275,14 @@ export default function Home() {
           if (Math.abs(video.currentTime - audio.currentTime) > 0.2) video.currentTime = audio.currentTime;
         }
       }
-      if (!audio.paused && !audio.ended) setCurrentTime(audio.currentTime);
+      if (!audio.paused && !audio.ended) {
+        setCurrentTime(audio.currentTime);
+        if (scrollContainerRef.current && timelineRef.current && !isDraggingRef.current && durationRef.current > 0) {
+          const container = scrollContainerRef.current;
+          const playheadX = (audio.currentTime / durationRef.current) * timelineRef.current.offsetWidth;
+          container.scrollLeft = playheadX - container.offsetWidth / 2;
+        }
+      }
     }
     requestRef.current = requestAnimationFrame(syncAndDraw);
   };
@@ -442,6 +454,7 @@ export default function Home() {
     e.preventDefault();
     e.stopPropagation();
     setActivePreset('custom');
+    isDraggingRef.current = true;
     
     const startX = e.clientX;
     const initialEnd = zoomEvents[index].end;
@@ -467,6 +480,7 @@ export default function Home() {
     };
 
     const handlePointerUp = () => {
+      isDraggingRef.current = false;
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
@@ -478,6 +492,7 @@ export default function Home() {
   const handleScrubStart = (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    isDraggingRef.current = true;
     
     const wasPlaying = isPlaying;
     if (wasPlaying) {
@@ -500,6 +515,7 @@ export default function Home() {
     };
 
     const handlePointerUp = () => {
+      isDraggingRef.current = false;
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
       if (wasPlaying) {
@@ -622,11 +638,15 @@ export default function Home() {
               </div>
 
               {/* Scrollable Track */}
-              <div className="overflow-x-auto no-scrollbar pb-4 pt-8">
+              <div 
+                className="overflow-x-auto no-scrollbar pb-4 pt-8 select-none"
+                ref={scrollContainerRef}
+                style={{ WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
+              >
                 <div className="relative h-24" style={{ minWidth: `${Math.max(duration * 60, 800)}px` }} ref={timelineRef}>
                   
                   {/* Timeline Background Track for scrubbing */}
-                  <div className="absolute inset-0 cursor-text" onClick={(e) => {
+                  <div className="absolute inset-0 cursor-pointer" onClick={(e) => {
                      const rect = e.currentTarget.getBoundingClientRect();
                      const clickX = e.clientX - rect.left;
                      const targetTime = (clickX / rect.width) * duration;
@@ -672,7 +692,7 @@ export default function Home() {
                              if(videoObjRef.current) videoObjRef.current.currentTime = targetTime; 
                              if(audioRef.current) audioRef.current.currentTime = targetTime; 
                            }}
-                           className={`absolute inset-y-1 left-[1px] right-[1px] rounded-xl flex flex-col items-center justify-center p-1 border transition-colors cursor-text overflow-hidden ${isActive ? 'bg-[#888888]/30 border-[#888888]' : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05]'}`}
+                           className={`absolute inset-y-1 left-[1px] right-[1px] rounded-xl flex flex-col items-center justify-center p-1 border transition-colors cursor-pointer overflow-hidden ${isActive ? 'bg-[#888888]/30 border-[#888888]' : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05]'}`}
                          >
                            <span className="text-[12px] font-black text-[#aaaaaa] z-10 pointer-events-none">{event.scale.toFixed(2)}x</span>
                            <span className="text-[8px] text-white/40 font-mono mt-1 z-10 pointer-events-none">{formatTime(event.start)} - {formatTime(event.end)}</span>
