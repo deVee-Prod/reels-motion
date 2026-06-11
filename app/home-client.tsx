@@ -27,7 +27,8 @@ function buildFilterComplex(
   totalDuration: number,
   intensity: number,
   baseZoom: number,
-  transitionDuration: number  // 0 = instant snap, >0 = smooth transition in seconds
+  transitionDuration: number, // 0 = instant snap, >0 = smooth transition in seconds
+  motion: string
 ): string {
   const sorted = [...events].sort((a, b) => a.start - b.start);
 
@@ -78,10 +79,15 @@ function buildFilterComplex(
 
   const segParts = finalSegs.map((seg, i) => {
     const trim = `trim=start=${seg.start.toFixed(3)}:end=${seg.end.toFixed(3)},setpts=PTS-STARTPTS`;
+    const dur = (seg.end - seg.start).toFixed(3);
     if (seg.transition) {
       // Short zoompan transition from one scale to another
       const { from, to } = seg.transition;
-      const dur = (seg.end - seg.start).toFixed(3);
+      return `[v${i}]${trim},zoompan=z='${from.toFixed(4)}+(${(to - from).toFixed(4)})*t/${dur}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${w}x${h}[seg${i}]`;
+    }
+    if (motion === 'slow_zoom') {
+      const from = seg.scale;
+      const to = seg.scale + (i % 2 === 0 ? 0.08 : -0.05);
       return `[v${i}]${trim},zoompan=z='${from.toFixed(4)}+(${(to - from).toFixed(4)})*t/${dur}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=${w}x${h}[seg${i}]`;
     }
     if (Math.abs(seg.scale - 1.0) < 0.005) {
@@ -99,13 +105,13 @@ function buildFilterComplex(
 }
 
 const PRESETS = [
-  { id: 'dynamic_snap', name: 'Dynamic Snap', intensity: 1.0, base: 1.0, speed: 1.0 },
-  { id: 'smooth_cinematic', name: 'Smooth Cinematic', intensity: 0.8, base: 1.05, speed: 0.0 },
-  { id: 'aggressive_cuts', name: 'Aggressive Cuts', intensity: 1.5, base: 1.0, speed: 1.0 },
-  { id: 'subtle_motion', name: 'Subtle Motion', intensity: 0.5, base: 1.0, speed: 0.2 },
-  { id: 'vlog_style', name: 'Vlog Style', intensity: 1.2, base: 1.02, speed: 0.8 },
-  { id: 'high_energy', name: 'High Energy', intensity: 1.8, base: 1.05, speed: 1.0 },
-  { id: 'documentary', name: 'Documentary', intensity: 0.6, base: 1.1, speed: 0.0 },
+  { id: 'dynamic_snap', name: 'Dynamic Snap', intensity: 1.0, base: 1.0, speed: 1.0, density: 'normal', motion: 'static' },
+  { id: 'smooth_cinematic', name: 'Smooth Cinematic', intensity: 0.8, base: 1.05, speed: 0.0, density: 'low', motion: 'slow_zoom' },
+  { id: 'aggressive_cuts', name: 'Aggressive Cuts', intensity: 1.5, base: 1.0, speed: 1.0, density: 'high', motion: 'static' },
+  { id: 'subtle_motion', name: 'Subtle Motion', intensity: 0.5, base: 1.0, speed: 0.2, density: 'normal', motion: 'slow_zoom' },
+  { id: 'vlog_style', name: 'Vlog Style', intensity: 1.2, base: 1.02, speed: 0.8, density: 'high', motion: 'static' },
+  { id: 'high_energy', name: 'High Energy', intensity: 1.8, base: 1.05, speed: 1.0, density: 'very_high', motion: 'static' },
+  { id: 'documentary', name: 'Documentary', intensity: 0.6, base: 1.1, speed: 0.0, density: 'low', motion: 'slow_zoom' },
 ];
 
 export default function Home() {
@@ -119,6 +125,7 @@ export default function Home() {
   const [exportProgress, setExportProgress] = useState(0);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [zoomEvents, setZoomEvents] = useState<ZoomEvent[]>([]);
+  const [originalEvents, setOriginalEvents] = useState<ZoomEvent[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -126,6 +133,8 @@ export default function Home() {
   const [intensityScale, setIntensityScale] = useState(1);
   const [baseZoom, setBaseZoom] = useState(1.0);
   const [snapSpeed, setSnapSpeed] = useState(1.0); // 1=instant, 0=0.4s transition
+  const [density, setDensity] = useState('normal');
+  const [motion, setMotion] = useState('static');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -137,11 +146,62 @@ export default function Home() {
   const intensityRef = useRef(1);
   const baseZoomRef = useRef(1.0);
   const snapSpeedRef = useRef(1.0);
+  const motionRef = useRef('static');
 
   useEffect(() => { zoomEventsRef.current = zoomEvents; }, [zoomEvents]);
   useEffect(() => { intensityRef.current = intensityScale; }, [intensityScale]);
   useEffect(() => { baseZoomRef.current = baseZoom; }, [baseZoom]);
   useEffect(() => { snapSpeedRef.current = snapSpeed; }, [snapSpeed]);
+  useEffect(() => { motionRef.current = motion; }, [motion]);
+
+  useEffect(() => {
+    if (originalEvents.length === 0) {
+      setZoomEvents([]);
+      return;
+    }
+    let processed = [...originalEvents];
+    if (density === 'high' || density === 'very_high') {
+      const maxDur = density === 'very_high' ? 0.6 : 1.2;
+      const splitEvents: ZoomEvent[] = [];
+      processed.forEach(ev => {
+        const dur = ev.end - ev.start;
+        if (dur > maxDur) {
+          const chunks = Math.ceil(dur / maxDur);
+          const chunkDur = dur / chunks;
+          for (let i = 0; i < chunks; i++) {
+            splitEvents.push({
+              start: ev.start + i * chunkDur,
+              end: ev.start + (i + 1) * chunkDur,
+              scale: ev.scale * (i % 2 === 1 ? 1.1 : 1.0),
+              text: ev.text
+            });
+          }
+        } else {
+          splitEvents.push(ev);
+        }
+      });
+      processed = splitEvents;
+    } else if (density === 'low') {
+      const mergedEvents: ZoomEvent[] = [];
+      let current: ZoomEvent | null = null;
+      processed.forEach(ev => {
+        if (!current) {
+          current = { ...ev };
+        } else {
+          if (current.end - current.start < 2.5) {
+            current.end = ev.end;
+            current.text += ' ' + ev.text;
+          } else {
+            mergedEvents.push(current);
+            current = { ...ev };
+          }
+        }
+      });
+      if (current) mergedEvents.push(current);
+      processed = mergedEvents;
+    }
+    setZoomEvents(processed);
+  }, [density, originalEvents]);
 
   const syncAndDraw = () => {
     const video = videoObjRef.current;
@@ -163,13 +223,20 @@ export default function Home() {
 
           const getEffective = (aiScale: number) => Math.max(1.0, 1 + (aiScale - 1) * intensity + (base - 1));
 
-          const curSeg = events.find(z => t >= z.start && t < z.end);
+          const curSegIndex = events.findIndex(z => t >= z.start && t < z.end);
+          const curSeg = curSegIndex >= 0 ? events[curSegIndex] : undefined;
           const prevSeg = [...events].reverse().find(z => z.end <= t);
           const nextSeg = events.find(z => z.start > t);
 
-          const curScale = getEffective(curSeg?.scale ?? 1.0);
+          let curScale = getEffective(curSeg?.scale ?? 1.0);
           const prevScale = getEffective(prevSeg?.scale ?? 1.0);
           const nextScale = getEffective(nextSeg?.scale ?? 1.0);
+
+          if (curSeg && motionRef.current === 'slow_zoom') {
+             const progress = (t - curSeg.start) / (curSeg.end - curSeg.start);
+             const toScale = curScale + (curSegIndex % 2 === 0 ? 0.08 : -0.05);
+             curScale = curScale + (toScale - curScale) * progress;
+          }
 
           let zoom = curScale;
           if (transD > 0.01 && curSeg) {
@@ -286,7 +353,7 @@ export default function Home() {
       }
       const result = await res.json();
       if (result.error) { alert(result.error); return; }
-      if (result.zoomEvents?.length > 0) setZoomEvents(result.zoomEvents);
+      if (result.zoomEvents?.length > 0) setOriginalEvents(result.zoomEvents);
       await ffmpeg.deleteFile(`input.${ext}`); await ffmpeg.deleteFile('audio.mp3');
     } catch(err: any) { alert(`שגיאה: ${err.message}`); } finally { setIsAnalyzing(false); }
   };
@@ -312,7 +379,7 @@ export default function Home() {
       const transitionDuration = (1 - snapSpeed) * 0.4;
       let args: string[];
       if (zoomEvents.length > 0) {
-        const fc = buildFilterComplex(zoomEvents, safeW, safeH, duration, intensityScale, baseZoom, transitionDuration);
+        const fc = buildFilterComplex(zoomEvents, safeW, safeH, duration, intensityScale, baseZoom, transitionDuration, motion);
         args = ['-i', inp, '-filter_complex', fc, '-map', '[outv]', '-map', '0:a', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-c:a', 'copy', out];
       } else {
         args = ['-i', inp, '-vf', `scale=${safeW}:${safeH},format=yuv420p`, '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-c:a', 'copy', out];
@@ -482,6 +549,8 @@ export default function Home() {
                         setIntensityScale(p.intensity);
                         setBaseZoom(p.base);
                         setSnapSpeed(p.speed);
+                        setDensity(p.density);
+                        setMotion(p.motion);
                       }
                     }
                   }}
@@ -491,6 +560,44 @@ export default function Home() {
                   {PRESETS.map(p => (
                     <option key={p.id} className="bg-[#0c0c0c]" value={p.id}>{p.name}</option>
                   ))}
+                </select>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L5 5L9 1" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Density */}
+          {videoPreview && (
+            <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+              <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Cut Density</span>
+              <div className="relative flex-1">
+                <select value={density} onChange={(e) => { setDensity(e.target.value); setActivePreset('custom'); }} className="w-full bg-transparent text-[#888888] text-[9px] font-bold uppercase tracking-widest outline-none cursor-pointer appearance-none pr-6">
+                  <option className="bg-[#0c0c0c]" value="low">Low (Fewer Cuts)</option>
+                  <option className="bg-[#0c0c0c]" value="normal">Normal</option>
+                  <option className="bg-[#0c0c0c]" value="high">High (More Cuts)</option>
+                  <option className="bg-[#0c0c0c]" value="very_high">Very High</option>
+                </select>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 1L5 5L9 1" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Motion */}
+          {videoPreview && (
+            <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+              <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Motion</span>
+              <div className="relative flex-1">
+                <select value={motion} onChange={(e) => { setMotion(e.target.value); setActivePreset('custom'); }} className="w-full bg-transparent text-[#888888] text-[9px] font-bold uppercase tracking-widest outline-none cursor-pointer appearance-none pr-6">
+                  <option className="bg-[#0c0c0c]" value="static">Static (Hold)</option>
+                  <option className="bg-[#0c0c0c]" value="slow_zoom">Slow Zoom</option>
                 </select>
                 <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
                   <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
