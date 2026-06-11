@@ -548,9 +548,9 @@ export default function Home() {
             )}
           </div>
 
-          {/* Playback Controls */}
+          {/* Unified Advanced Timeline & Playback Controls */}
           {videoPreview && (
-            <div className="flex flex-col gap-4 bg-[#0c0c0c] border border-white/[0.03] rounded-2xl p-4 shadow-inner">
+            <div className="flex flex-col bg-[#0c0c0c] border border-white/[0.03] rounded-2xl p-4 shadow-inner gap-4">
               <div className="flex items-center justify-between px-2">
                 <button onClick={togglePlay} className="w-10 h-10 rounded-full bg-[#888888]/10 border border-[#888888]/20 flex items-center justify-center active:scale-95">
                   {isPlaying
@@ -563,19 +563,69 @@ export default function Home() {
                   <span className="py-1">{formatTime(duration)}</span>
                 </div>
               </div>
-              <div className="px-2">
-                <div className="relative h-5 flex items-center">
-                  {duration > 0 && zoomEvents.map((z, i) => (
-                    <div key={i} className="absolute top-1/2 -translate-y-1/2 h-3 rounded-sm pointer-events-none"
-                      style={{
-                        left: `${(z.start / duration) * 100}%`,
-                        width: `${Math.max(((z.end - z.start) / duration) * 100, 0.5)}%`,
-                        background: `rgba(136,136,136,${0.2 + (z.scale - 1) * 1.5})`,
-                      }}
-                    />
-                  ))}
-                  <input type="range" min="0" max={duration || 100} step="0.01" value={currentTime} onChange={handleSeek}
-                    className="relative z-10 w-full h-1.5 bg-white/5 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-[#888888] [&::-webkit-slider-thumb]:rounded-full cursor-pointer" />
+
+              {/* Scrollable Track */}
+              <div className="overflow-x-auto no-scrollbar pb-2">
+                <div className="relative h-24" style={{ minWidth: `${Math.max(duration * 60, 800)}px` }} ref={timelineRef}>
+                  
+                  {/* Timeline Background Track for scrubbing */}
+                  <div className="absolute inset-0 cursor-text" onClick={(e) => {
+                     const rect = e.currentTarget.getBoundingClientRect();
+                     const clickX = e.clientX - rect.left;
+                     const targetTime = (clickX / rect.width) * duration;
+                     setCurrentTime(targetTime);
+                     if (videoObjRef.current) videoObjRef.current.currentTime = targetTime;
+                     if (audioRef.current) audioRef.current.currentTime = targetTime;
+                  }} />
+
+                  {/* Playhead */}
+                  {duration > 0 && (
+                    <div 
+                      className="absolute top-0 bottom-0 w-px bg-red-500 z-30 pointer-events-none"
+                      style={{ left: `${(currentTime / duration) * 100}%` }}
+                    >
+                      <div className="absolute -top-1 -translate-x-1/2 w-2 h-2 rotate-45 bg-red-500" />
+                    </div>
+                  )}
+
+                  {/* Zoom Events */}
+                  {duration > 0 && zoomEvents.length > 0 ? zoomEvents.map((event, i) => {
+                     const left = (event.start / duration) * 100;
+                     const width = ((event.end - event.start) / duration) * 100;
+                     const isActive = currentTime >= event.start && currentTime < event.end;
+                     return (
+                       <div key={i} className="absolute top-0 bottom-0 group" style={{ left: `${left}%`, width: `${width}%` }}>
+                         <div 
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             const rect = e.currentTarget.getBoundingClientRect();
+                             const clickX = e.clientX - rect.left;
+                             const percentage = clickX / rect.width;
+                             const targetTime = event.start + (event.end - event.start) * Math.max(0, Math.min(1, percentage));
+                             setCurrentTime(targetTime); 
+                             if(videoObjRef.current) videoObjRef.current.currentTime = targetTime; 
+                             if(audioRef.current) audioRef.current.currentTime = targetTime; 
+                           }}
+                           className={`absolute inset-y-1 left-[1px] right-[1px] rounded-xl flex flex-col items-center justify-center p-1 border transition-colors cursor-text overflow-hidden ${isActive ? 'bg-[#888888]/30 border-[#888888]' : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05]'}`}
+                         >
+                           <span className="text-[12px] font-black text-[#aaaaaa] z-10 pointer-events-none">{event.scale.toFixed(2)}x</span>
+                           <span className="text-[8px] text-white/40 font-mono mt-1 z-10 pointer-events-none">{formatTime(event.start)} - {formatTime(event.end)}</span>
+                           <span className="text-[7px] text-white/30 font-mono mt-0.5 z-10 truncate w-full text-center px-1 pointer-events-none">{event.text}</span>
+                           <div className="absolute inset-0 bg-[#888888] opacity-10 pointer-events-none" style={{ opacity: 0.1 + (event.scale - 1) * 0.5 }} />
+                         </div>
+                         {i < zoomEvents.length - 1 && (
+                           <div 
+                             className="absolute top-0 bottom-0 -right-3 w-6 z-20 flex items-center justify-center cursor-col-resize"
+                             onPointerDown={(e) => handleDragStart(i, e)}
+                           >
+                             <div className="w-1.5 h-10 bg-[#888888] rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] opacity-50 group-hover:opacity-100 transition-opacity" />
+                           </div>
+                         )}
+                       </div>
+                     );
+                  }) : (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-[8px] uppercase tracking-[0.3em] text-white/10 font-bold">Waiting for Analysis...</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -685,48 +735,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Advanced Timeline */}
-          {videoPreview && (
-            <div className="bg-[#0c0c0c] border border-white/[0.03] rounded-2xl p-4 overflow-x-auto no-scrollbar">
-              <div className="relative h-20" style={{ minWidth: `${Math.max(duration * 20, 600)}px` }} ref={timelineRef}>
-                {duration > 0 && (
-                  <div 
-                    className="absolute top-0 bottom-0 w-px bg-red-500 z-30 pointer-events-none"
-                    style={{ left: `${(currentTime / duration) * 100}%` }}
-                  >
-                    <div className="absolute -top-1 -translate-x-1/2 w-2 h-2 rotate-45 bg-red-500" />
-                  </div>
-                )}
-                {duration > 0 && zoomEvents.length > 0 ? zoomEvents.map((event, i) => {
-                   const left = (event.start / duration) * 100;
-                   const width = ((event.end - event.start) / duration) * 100;
-                   const isActive = currentTime >= event.start && currentTime < event.end;
-                   return (
-                     <div key={i} className="absolute top-0 bottom-0 group" style={{ left: `${left}%`, width: `${width}%` }}>
-                       <div 
-                         onClick={() => { if(audioRef.current) audioRef.current.currentTime = event.start; if(videoObjRef.current) videoObjRef.current.currentTime = event.start; setCurrentTime(event.start); }}
-                         className={`absolute inset-y-1 left-0 right-0 rounded-xl flex flex-col items-center justify-center p-1 border transition-colors cursor-pointer overflow-hidden ${isActive ? 'bg-[#888888]/30 border-[#888888]' : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05]'}`}
-                       >
-                         <span className="text-[10px] font-black text-[#aaaaaa] z-10">{event.scale.toFixed(2)}x</span>
-                         <span className="text-[6px] text-white/30 font-mono mt-0.5 z-10 truncate w-full text-center px-1">{event.text}</span>
-                         <div className="absolute inset-0 bg-[#888888] opacity-10 pointer-events-none" style={{ opacity: 0.1 + (event.scale - 1) * 0.5 }} />
-                       </div>
-                       {i < zoomEvents.length - 1 && (
-                         <div 
-                           className="absolute top-0 bottom-0 -right-2 w-4 z-20 flex items-center justify-center cursor-col-resize opacity-0 group-hover:opacity-100 transition-opacity"
-                           onPointerDown={(e) => handleDragStart(i, e)}
-                         >
-                           <div className="w-1 h-8 bg-white/50 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
-                         </div>
-                       )}
-                     </div>
-                   );
-                }) : (
-                  <div className="w-full h-full flex items-center justify-center text-[8px] uppercase tracking-[0.3em] text-white/10 font-bold">Waiting for Analysis...</div>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Advanced Timeline moved up */}
 
           {/* Buttons */}
           <div className="flex flex-col gap-3 md:gap-4 pb-8">
