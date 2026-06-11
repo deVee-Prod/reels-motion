@@ -142,6 +142,7 @@ export default function Home() {
   const ffmpegRef = useRef<any>(null);
   const requestRef = useRef<number | null>(null);
   const videoObjRef = useRef<HTMLVideoElement | null>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
   const zoomEventsRef = useRef<ZoomEvent[]>([]);
   const intensityRef = useRef(1);
   const baseZoomRef = useRef(1.0);
@@ -417,6 +418,43 @@ export default function Home() {
     } catch(err) { console.error(err); } finally { setLoginLoading(false); }
   };
 
+  const handleDragStart = (index: number, e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActivePreset('custom');
+    
+    const startX = e.clientX;
+    const initialEnd = zoomEvents[index].end;
+    const minTime = zoomEvents[index].start + 0.2;
+    const maxTime = index < zoomEvents.length - 1 ? zoomEvents[index + 1].end - 0.2 : duration;
+
+    const trackWidth = timelineRef.current?.clientWidth || 800;
+    const secondsPerPixel = duration / trackWidth;
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      let newTime = initialEnd + (deltaX * secondsPerPixel);
+      newTime = Math.max(minTime, Math.min(newTime, maxTime));
+      
+      setZoomEvents(prev => {
+        const next = [...prev];
+        next[index] = { ...next[index], end: newTime };
+        if (index < next.length - 1) {
+          next[index + 1] = { ...next[index + 1], start: newTime };
+        }
+        return next;
+      });
+    };
+
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
+
   const activeEvent = zoomEvents.find(z => currentTime >= z.start && currentTime < z.end);
 
   const LabelFooter = () => (
@@ -647,23 +685,46 @@ export default function Home() {
             </div>
           )}
 
-          {/* Zoom Events Strip */}
+          {/* Advanced Timeline */}
           {videoPreview && (
-            <div className="h-24 bg-[#0c0c0c] border border-white/[0.03] rounded-2xl p-4 flex gap-3 items-center overflow-x-auto no-scrollbar">
-              {zoomEvents.length > 0 ? zoomEvents.map((event, i) => (
-                <div key={i}
-                  onClick={() => { if(audioRef.current) audioRef.current.currentTime = event.start; if(videoObjRef.current) videoObjRef.current.currentTime = event.start; setCurrentTime(event.start); }}
-                  className={`h-full min-w-[110px] max-w-[140px] rounded-xl flex flex-col items-center justify-center p-2 relative transition-all cursor-pointer border ${currentTime >= event.start && currentTime < event.end ? 'bg-[#888888]/30 border-[#888888]' : 'bg-white/[0.02] border-white/5'}`}
-                >
-                  <span className="text-[10px] font-black text-[#aaaaaa]">{event.scale.toFixed(2)}x</span>
-                  <span className="text-[7px] text-white/30 font-mono mt-0.5">{formatTime(event.start)} → {formatTime(event.end)}</span>
-                  <span className="text-[6px] text-white/20 font-mono mt-0.5 truncate w-full text-center px-1">{event.text}</span>
-                  <button onClick={(e) => { e.stopPropagation(); setZoomEvents(prev => prev.filter((_,idx) => idx !== i)); }}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-red-500/50 rounded-full text-[8px] flex items-center justify-center hover:bg-red-500 transition-colors">✕</button>
-                </div>
-              )) : (
-                <div className="w-full text-center text-[8px] uppercase tracking-[0.3em] text-white/10 font-bold">Waiting for Analysis...</div>
-              )}
+            <div className="bg-[#0c0c0c] border border-white/[0.03] rounded-2xl p-4 overflow-x-auto no-scrollbar">
+              <div className="relative h-20" style={{ minWidth: `${Math.max(duration * 20, 600)}px` }} ref={timelineRef}>
+                {duration > 0 && (
+                  <div 
+                    className="absolute top-0 bottom-0 w-px bg-red-500 z-30 pointer-events-none"
+                    style={{ left: `${(currentTime / duration) * 100}%` }}
+                  >
+                    <div className="absolute -top-1 -translate-x-1/2 w-2 h-2 rotate-45 bg-red-500" />
+                  </div>
+                )}
+                {duration > 0 && zoomEvents.length > 0 ? zoomEvents.map((event, i) => {
+                   const left = (event.start / duration) * 100;
+                   const width = ((event.end - event.start) / duration) * 100;
+                   const isActive = currentTime >= event.start && currentTime < event.end;
+                   return (
+                     <div key={i} className="absolute top-0 bottom-0 group" style={{ left: `${left}%`, width: `${width}%` }}>
+                       <div 
+                         onClick={() => { if(audioRef.current) audioRef.current.currentTime = event.start; if(videoObjRef.current) videoObjRef.current.currentTime = event.start; setCurrentTime(event.start); }}
+                         className={`absolute inset-y-1 left-0 right-0 rounded-xl flex flex-col items-center justify-center p-1 border transition-colors cursor-pointer overflow-hidden ${isActive ? 'bg-[#888888]/30 border-[#888888]' : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.05]'}`}
+                       >
+                         <span className="text-[10px] font-black text-[#aaaaaa] z-10">{event.scale.toFixed(2)}x</span>
+                         <span className="text-[6px] text-white/30 font-mono mt-0.5 z-10 truncate w-full text-center px-1">{event.text}</span>
+                         <div className="absolute inset-0 bg-[#888888] opacity-10 pointer-events-none" style={{ opacity: 0.1 + (event.scale - 1) * 0.5 }} />
+                       </div>
+                       {i < zoomEvents.length - 1 && (
+                         <div 
+                           className="absolute top-0 bottom-0 -right-2 w-4 z-20 flex items-center justify-center cursor-col-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                           onPointerDown={(e) => handleDragStart(i, e)}
+                         >
+                           <div className="w-1 h-8 bg-white/50 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                         </div>
+                       )}
+                     </div>
+                   );
+                }) : (
+                  <div className="w-full h-full flex items-center justify-center text-[8px] uppercase tracking-[0.3em] text-white/10 font-bold">Waiting for Analysis...</div>
+                )}
+              </div>
             </div>
           )}
 
