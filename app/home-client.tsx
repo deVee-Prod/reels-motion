@@ -147,6 +147,7 @@ export default function Home() {
   const baseZoomRef = useRef(1.0);
   const snapSpeedRef = useRef(1.0);
   const motionRef = useRef('static');
+  const hasAutoAnalyzed = useRef(false);
 
   useEffect(() => { zoomEventsRef.current = zoomEvents; }, [zoomEvents]);
   useEffect(() => { intensityRef.current = intensityScale; }, [intensityScale]);
@@ -285,7 +286,8 @@ export default function Home() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
     if (videoPreview) URL.revokeObjectURL(videoPreview);
-    setFile(f); setZoomEvents([]); setIsPlaying(false); setCurrentTime(0);
+    hasAutoAnalyzed.current = false;
+    setFile(f); setZoomEvents([]); setOriginalEvents([]); setIsPlaying(false); setCurrentTime(0);
     const url = URL.createObjectURL(new Blob([await f.arrayBuffer()], { type: f.type }));
     setVideoPreview(url);
     const video = document.createElement('video');
@@ -357,6 +359,14 @@ export default function Home() {
       await ffmpeg.deleteFile(`input.${ext}`); await ffmpeg.deleteFile('audio.mp3');
     } catch(err: any) { alert(`שגיאה: ${err.message}`); } finally { setIsAnalyzing(false); }
   };
+
+  useEffect(() => {
+    if (file && duration > 0 && !hasAutoAnalyzed.current && !isAnalyzing) {
+      hasAutoAnalyzed.current = true;
+      handleAnalyze();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [file, duration]);
 
   const exportVideo = async () => {
     if (!file) return;
@@ -659,14 +669,10 @@ export default function Home() {
 
           {/* Buttons */}
           <div className="flex flex-col gap-3 md:gap-4 pb-8">
-            <button onClick={handleAnalyze} disabled={!file || isAnalyzing || isExporting}
-              className={`w-full py-4 rounded-full uppercase tracking-[0.4em] text-[9px] font-black transition-all ${file && !isAnalyzing && !isExporting ? 'bg-[#888888] shadow-[0_0_30px_rgba(136,136,136,0.3)]' : 'bg-white/5 text-white/20'}`}>
-              {isAnalyzing ? 'Analyzing...' : '1. ANALYZE'}
-            </button>
             {zoomEvents.length > 0 && (
               <button onClick={exportVideo} disabled={isExporting || isAnalyzing}
                 className={`w-full py-5 rounded-full uppercase tracking-[0.5em] text-[10px] font-black transition-all active:scale-95 ${!isExporting && !isAnalyzing ? 'bg-white text-black shadow-[0_0_40px_rgba(255,255,255,0.2)]' : 'bg-white/5 text-white/20'}`}>
-                {isExporting ? `Rendering ${exportProgress}%` : '2. DOWNLOAD'}
+                {isExporting ? `Rendering ${exportProgress}%` : 'DOWNLOAD'}
               </button>
             )}
           </div>
