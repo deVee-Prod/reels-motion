@@ -662,14 +662,14 @@ export default function Home() {
                       style={{ left: `${(currentTime / duration) * 100}%` }}
                     >
                       {/* Invisible wider grab area for the line */}
-                      <div className="absolute top-0 bottom-0 -left-4 w-8 cursor-ew-resize" onPointerDown={handleScrubStart} />
+                      <div className="absolute top-0 bottom-0 -left-6 w-12 cursor-ew-resize touch-none" onPointerDown={handleScrubStart} />
                       
                       {/* Top Handle */}
                       <div 
-                        className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-10 flex items-start justify-center cursor-ew-resize"
+                        className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-14 flex items-start justify-center cursor-ew-resize touch-none"
                         onPointerDown={handleScrubStart}
                       >
-                        <div className="w-5 h-5 rotate-45 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] border border-white/30" />
+                        <div className="w-6 h-6 rotate-45 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] border border-white/30 mt-2" />
                       </div>
                     </div>
                   )}
@@ -701,7 +701,7 @@ export default function Home() {
                          </div>
                          {i < zoomEvents.length - 1 && (
                            <div 
-                             className="absolute top-0 bottom-0 -right-3 w-6 z-20 flex items-center justify-center cursor-col-resize"
+                             className="absolute top-0 bottom-0 -right-4 w-8 z-20 flex items-center justify-center cursor-col-resize touch-none"
                              onPointerDown={(e) => handleDragStart(i, e)}
                            >
                              <div className="w-1.5 h-10 bg-[#888888] rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)] opacity-50 group-hover:opacity-100 transition-opacity" />
