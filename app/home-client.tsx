@@ -369,6 +369,26 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file, duration]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Allow inputs like password to work normally
+      if (e.target instanceof HTMLInputElement && e.target.type !== 'range' && e.target.type !== 'button') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        const video = videoObjRef.current, audio = audioRef.current;
+        if (!video || !audio) return;
+        if (audio.paused) {
+          video.muted = true;
+          video.play().then(() => audio.play()).then(() => setIsPlaying(true)).catch(console.error);
+        } else {
+          video.pause(); audio.pause(); setIsPlaying(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const exportVideo = async () => {
     if (!file) return;
     setIsExporting(true); setExportProgress(0);
