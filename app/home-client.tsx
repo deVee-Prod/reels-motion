@@ -475,6 +475,43 @@ export default function Home() {
     window.addEventListener('pointerup', handlePointerUp);
   };
 
+  const handleScrubStart = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const wasPlaying = isPlaying;
+    if (wasPlaying) {
+      videoObjRef.current?.pause();
+      audioRef.current?.pause();
+    }
+
+    const trackElement = timelineRef.current;
+    if (!trackElement) return;
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const rect = trackElement.getBoundingClientRect();
+      const clickX = moveEvent.clientX - rect.left;
+      let targetTime = (clickX / rect.width) * duration;
+      targetTime = Math.max(0, Math.min(targetTime, duration));
+      
+      setCurrentTime(targetTime);
+      if (videoObjRef.current) videoObjRef.current.currentTime = targetTime;
+      if (audioRef.current) audioRef.current.currentTime = targetTime;
+    };
+
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      if (wasPlaying) {
+        videoObjRef.current?.play().catch(() => {});
+        audioRef.current?.play().catch(() => {});
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
+
   const activeEvent = zoomEvents.find(z => currentTime >= z.start && currentTime < z.end);
 
   const LabelFooter = () => (
@@ -601,10 +638,19 @@ export default function Home() {
                   {/* Playhead */}
                   {duration > 0 && (
                     <div 
-                      className="absolute top-0 bottom-0 w-px bg-red-500 z-30 pointer-events-none"
+                      className="absolute top-0 bottom-0 w-px bg-red-500 z-40"
                       style={{ left: `${(currentTime / duration) * 100}%` }}
                     >
-                      <div className="absolute -top-1 -translate-x-1/2 w-2 h-2 rotate-45 bg-red-500" />
+                      {/* Invisible wider grab area for the line */}
+                      <div className="absolute top-0 bottom-0 -left-3 w-6 cursor-ew-resize" onPointerDown={handleScrubStart} />
+                      
+                      {/* Top Handle */}
+                      <div 
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 flex items-start justify-center cursor-ew-resize group/playhead"
+                        onPointerDown={handleScrubStart}
+                      >
+                        <div className="w-3 h-3 rotate-45 bg-red-500 group-hover/playhead:scale-150 transition-transform shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
+                      </div>
                     </div>
                   )}
 
