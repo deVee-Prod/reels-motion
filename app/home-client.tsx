@@ -622,7 +622,7 @@ export default function Home() {
               </div>
 
               {/* Scrollable Track */}
-              <div className="overflow-x-auto no-scrollbar pb-2">
+              <div className="overflow-x-auto no-scrollbar pb-4 pt-8">
                 <div className="relative h-24" style={{ minWidth: `${Math.max(duration * 60, 800)}px` }} ref={timelineRef}>
                   
                   {/* Timeline Background Track for scrubbing */}
@@ -638,18 +638,18 @@ export default function Home() {
                   {/* Playhead */}
                   {duration > 0 && (
                     <div 
-                      className="absolute top-0 bottom-0 w-px bg-red-500 z-40"
+                      className="absolute -top-6 -bottom-4 w-[2px] bg-red-500 z-50 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
                       style={{ left: `${(currentTime / duration) * 100}%` }}
                     >
                       {/* Invisible wider grab area for the line */}
-                      <div className="absolute top-0 bottom-0 -left-3 w-6 cursor-ew-resize" onPointerDown={handleScrubStart} />
+                      <div className="absolute top-0 bottom-0 -left-4 w-8 cursor-ew-resize" onPointerDown={handleScrubStart} />
                       
                       {/* Top Handle */}
                       <div 
-                        className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 flex items-start justify-center cursor-ew-resize group/playhead"
+                        className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-10 flex items-start justify-center cursor-ew-resize"
                         onPointerDown={handleScrubStart}
                       >
-                        <div className="w-3 h-3 rotate-45 bg-red-500 group-hover/playhead:scale-150 transition-transform shadow-[0_0_10px_rgba(239,68,68,0.8)]" />
+                        <div className="w-5 h-5 rotate-45 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] border border-white/30" />
                       </div>
                     </div>
                   )}
