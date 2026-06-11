@@ -646,7 +646,7 @@ export default function Home() {
                 <div className="relative h-24" style={{ minWidth: `${Math.max(duration * 60, 800)}px` }} ref={timelineRef}>
                   
                   {/* Timeline Background Track for scrubbing */}
-                  <div className="absolute inset-0 cursor-pointer" onClick={(e) => {
+                  <div className="absolute -top-8 -bottom-4 left-0 right-0 cursor-pointer" onClick={(e) => {
                      const rect = e.currentTarget.getBoundingClientRect();
                      const clickX = e.clientX - rect.left;
                      const targetTime = (clickX / rect.width) * duration;
