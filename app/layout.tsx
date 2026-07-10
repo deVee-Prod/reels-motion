@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Reels Motion",
-  description: "Add dynamic zoom in and zoom out effects to your video.",
+  description: "Add dynamic zoom in and out effects to your Reels & Shorts.",
 };
 
 export default function RootLayout({
