@@ -549,6 +549,14 @@ export default function Home() {
         <h1 className="text-[10px] font-bold tracking-[0.5em] uppercase text-white/60">REELS MOTION</h1>
       </header>
         <main className="flex-1 flex flex-col justify-center w-full max-w-[340px] px-4">
+          <div className="mb-8 flex flex-col items-center gap-3 text-center">
+            <div className="flex items-center gap-2">
+              <div className="h-px w-8 bg-[#888888]/30" />
+              <span className="text-[#888888] text-[9px] tracking-[0.35em] uppercase font-semibold">Audio Visualizer</span>
+              <div className="h-px w-8 bg-[#888888]/30" />
+            </div>
+            <p className="text-white text-[11px] tracking-[0.05em] font-light uppercase">Dynamic Motion Graphics</p>
+          </div>
           <form onSubmit={handleLogin} className="space-y-4 bg-[#0c0c0c]/40 p-8 rounded-[24px] border border-white/5 backdrop-blur-xl w-full">
             <input
               type="password" value={password} onChange={(e) => setPassword(e.target.value)}
