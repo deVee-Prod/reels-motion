@@ -370,7 +370,7 @@ export default function Home() {
       if (result.error) { alert(result.error); return; }
       if (result.zoomEvents?.length > 0) setOriginalEvents(result.zoomEvents);
       await ffmpeg.deleteFile(`input.${ext}`); await ffmpeg.deleteFile('audio.mp3');
-    } catch(err: any) { alert(`שגיאה: ${err.message}`); } finally { setIsAnalyzing(false); }
+    } catch(err: any) { alert(`Error: ${err.message}`); } finally { setIsAnalyzing(false); }
   };
 
   useEffect(() => {
@@ -437,7 +437,7 @@ export default function Home() {
       a.download = `reels_motion_${Date.now()}.mp4`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       await ffmpeg.deleteFile(inp); await ffmpeg.deleteFile(out);
-    } catch(err: any) { alert("הייצוא נכשל: " + err.message); }
+    } catch(err: any) { alert("Export failed: " + err.message); }
     finally { setIsExporting(false); setExportProgress(0); }
   };
 

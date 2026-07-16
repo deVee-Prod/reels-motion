@@ -28,7 +28,7 @@ export default function ClientWrapper() {
           This is a Premium Tool.<br />Sign in with Google at deVee Music to get access.
         </p>
         <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.9rem', fontFamily: 'sans-serif', lineHeight: 1.6, maxWidth: 320 }}>
-          זהו כלי פרימיום.<br />התחבר עם חשבון Google שלך באתר deVee Music כדי לקבל גישה.
+          This is a premium tool.<br />Login with your Google account on deVee Music to get access.
         </p>
         <a href="https://devee-music.com" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', fontFamily: 'sans-serif', textDecoration: 'none', letterSpacing: '0.05em' }}>
           ← Back to deVee Music
