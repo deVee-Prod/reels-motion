@@ -542,11 +542,10 @@ export default function Home() {
   if (!authorized) {
     return (
       <div className="min-h-[100dvh] flex flex-col items-center text-center">
-        <header className="space-y-2 pt-8 pb-6 relative">
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 w-56 h-20 bg-[#888888] blur-[55px] opacity-[0.25] pointer-events-none" />
-          <Image src="/logo.png" alt="deVee" width={100} height={100} className="mx-auto relative rounded-full" />
-          <p className="text-[9px] tracking-[0.3em] text-white/70 font-bold uppercase">REELS MOTION</p>
-        </header>
+        <header className="relative z-20 flex flex-col items-center shrink-0 mb-4 pt-6">
+        <img src="/logo.png" alt="deVee" className="w-[100px] h-[100px] mb-2 object-contain" />
+        <h1 className="text-[10px] font-bold tracking-[0.5em] uppercase text-white/60">REELS MOTION</h1>
+      </header>
         <main className="flex-1 flex flex-col justify-center w-full max-w-[340px] px-4">
           <form onSubmit={handleLogin} className="space-y-4 bg-[#0c0c0c]/40 p-8 rounded-[24px] border border-white/5 backdrop-blur-xl w-full">
             <input
@@ -566,10 +565,9 @@ export default function Home() {
 
   return (
     <div className="min-h-[100dvh] text-white flex flex-col items-center overflow-y-auto overflow-x-hidden">
-      <header className="text-center space-y-2 pt-8 pb-6 relative">
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 w-56 h-20 bg-[#888888] blur-[55px] opacity-[0.20] pointer-events-none" />
-        <Image src="/logo.png" alt="deVee" width={72} height={72} className="opacity-85 mx-auto relative rounded-full" />
-        <p className="text-[9px] tracking-[0.3em] text-white/70 font-bold uppercase">REELS MOTION</p>
+      <header className="relative z-20 flex flex-col items-center shrink-0 mb-4 pt-6">
+        <img src="/logo.png" alt="deVee" className="w-[100px] h-[100px] mb-2 object-contain" />
+        <h1 className="text-[10px] font-bold tracking-[0.5em] uppercase text-white/60">REELS MOTION</h1>
       </header>
 
       <main className="w-full max-w-2xl mx-auto flex flex-col items-center flex-1 justify-center px-4 md:px-6 space-y-4 md:space-y-6 py-6">
