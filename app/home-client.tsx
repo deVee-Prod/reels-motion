@@ -785,28 +785,39 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Intensity */}
-          <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-            <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Intensity</span>
-            <input type="range" min="0" max="2" step="0.05" value={intensityScale} onChange={(e) => { setIntensityScale(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
-            <span className="text-[8px] font-mono text-[#888888] w-8 text-right">{intensityScale.toFixed(2)}x</span>
-          </div>
+          {/* Advanced Settings Dropdown */}
+          <details className="group bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden">
+            <summary className="flex items-center justify-between p-4 cursor-pointer outline-none list-none [&::-webkit-details-marker]:hidden">
+              <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Advanced Settings (Intensity, Base, Speed)</span>
+              <svg className="w-3 h-3 text-white/30 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <div className="p-4 pt-0 space-y-4 border-t border-white/5 mt-2">
+              {/* Intensity */}
+              <div className="flex items-center space-x-4">
+                <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap w-16">Intensity</span>
+                <input type="range" min="0" max="2" step="0.05" value={intensityScale} onChange={(e) => { setIntensityScale(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
+                <span className="text-[8px] font-mono text-[#888888] w-8 text-right">{intensityScale.toFixed(2)}x</span>
+              </div>
 
-          {/* Base Zoom */}
-          <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-            <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Base</span>
-            <input type="range" min="1" max="1.3" step="0.01" value={baseZoom}
-              onChange={(e) => { setBaseZoom(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
-            <span className="text-[8px] font-mono text-[#888888] w-8 text-right">{baseZoom.toFixed(2)}x</span>
-          </div>
+              {/* Base Zoom */}
+              <div className="flex items-center space-x-4">
+                <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap w-16">Base</span>
+                <input type="range" min="1" max="1.3" step="0.01" value={baseZoom}
+                  onChange={(e) => { setBaseZoom(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
+                <span className="text-[8px] font-mono text-[#888888] w-8 text-right">{baseZoom.toFixed(2)}x</span>
+              </div>
 
-          {/* Speed */}
-          <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-            <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Speed</span>
-            <input type="range" min="0" max="1" step="0.05" value={snapSpeed}
-              onChange={(e) => { setSnapSpeed(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
-            <span className="text-[8px] font-mono text-[#888888] w-10 text-right">{snapSpeed >= 0.95 ? 'SNAP' : `${((1 - snapSpeed) * 400).toFixed(0)}ms`}</span>
-          </div>
+              {/* Speed */}
+              <div className="flex items-center space-x-4">
+                <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap w-16">Speed</span>
+                <input type="range" min="0" max="1" step="0.05" value={snapSpeed}
+                  onChange={(e) => { setSnapSpeed(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
+                <span className="text-[8px] font-mono text-[#888888] w-10 text-right">{snapSpeed >= 0.95 ? 'SNAP' : `${((1 - snapSpeed) * 400).toFixed(0)}ms`}</span>
+              </div>
+            </div>
+          </details>
 
           {/* Advanced Timeline moved up */}
 
