@@ -717,108 +717,96 @@ export default function Home() {
           )}
 
           {/* Presets */}
-          {videoPreview && (
-            <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-              <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Style Preset</span>
-              <div className="relative flex-1">
-                <select 
-                  value={activePreset}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setActivePreset(val);
-                    if (val !== 'custom') {
-                      const p = PRESETS.find(p => p.id === val);
-                      if (p) {
-                        setIntensityScale(p.intensity);
-                        setBaseZoom(p.base);
-                        setSnapSpeed(p.speed);
-                        setDensity(p.density);
-                        setMotion(p.motion);
-                      }
+          <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+            <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Style Preset</span>
+            <div className="relative flex-1">
+              <select 
+                value={activePreset}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setActivePreset(val);
+                  if (val !== 'custom') {
+                    const p = PRESETS.find(p => p.id === val);
+                    if (p) {
+                      setIntensityScale(p.intensity);
+                      setBaseZoom(p.base);
+                      setSnapSpeed(p.speed);
+                      setDensity(p.density);
+                      setMotion(p.motion);
                     }
-                  }}
-                  className="w-full bg-transparent text-[#888888] text-[9px] font-bold uppercase tracking-widest outline-none cursor-pointer appearance-none pr-6"
-                >
-                  <option className="bg-[#0c0c0c]" value="custom">Custom</option>
-                  {PRESETS.map(p => (
-                    <option key={p.id} className="bg-[#0c0c0c]" value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L5 5L9 1" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
+                  }
+                }}
+                className="w-full bg-transparent text-[#888888] text-[9px] font-bold uppercase tracking-widest outline-none cursor-pointer appearance-none pr-6"
+              >
+                <option className="bg-[#0c0c0c]" value="custom">Custom</option>
+                {PRESETS.map(p => (
+                  <option key={p.id} className="bg-[#0c0c0c]" value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L5 5L9 1" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Density */}
-          {videoPreview && (
-            <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-              <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Cut Density</span>
-              <div className="relative flex-1">
-                <select value={density} onChange={(e) => { setDensity(e.target.value); setActivePreset('custom'); }} className="w-full bg-transparent text-[#888888] text-[9px] font-bold uppercase tracking-widest outline-none cursor-pointer appearance-none pr-6">
-                  <option className="bg-[#0c0c0c]" value="low">Low (Fewer Cuts)</option>
-                  <option className="bg-[#0c0c0c]" value="normal">Normal</option>
-                  <option className="bg-[#0c0c0c]" value="high">High (More Cuts)</option>
-                  <option className="bg-[#0c0c0c]" value="very_high">Very High</option>
-                </select>
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L5 5L9 1" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
+          <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+            <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Cut Density</span>
+            <div className="relative flex-1">
+              <select value={density} onChange={(e) => { setDensity(e.target.value); setActivePreset('custom'); }} className="w-full bg-transparent text-[#888888] text-[9px] font-bold uppercase tracking-widest outline-none cursor-pointer appearance-none pr-6">
+                <option className="bg-[#0c0c0c]" value="low">Low (Fewer Cuts)</option>
+                <option className="bg-[#0c0c0c]" value="normal">Normal</option>
+                <option className="bg-[#0c0c0c]" value="high">High (More Cuts)</option>
+                <option className="bg-[#0c0c0c]" value="very_high">Very High</option>
+              </select>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L5 5L9 1" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Motion */}
-          {videoPreview && (
-            <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-              <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Motion</span>
-              <div className="relative flex-1">
-                <select value={motion} onChange={(e) => { setMotion(e.target.value); setActivePreset('custom'); }} className="w-full bg-transparent text-[#888888] text-[9px] font-bold uppercase tracking-widest outline-none cursor-pointer appearance-none pr-6">
-                  <option className="bg-[#0c0c0c]" value="static">Static (Hold)</option>
-                  <option className="bg-[#0c0c0c]" value="slow_zoom">Slow Zoom</option>
-                </select>
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M1 1L5 5L9 1" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
+          <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+            <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Motion</span>
+            <div className="relative flex-1">
+              <select value={motion} onChange={(e) => { setMotion(e.target.value); setActivePreset('custom'); }} className="w-full bg-transparent text-[#888888] text-[9px] font-bold uppercase tracking-widest outline-none cursor-pointer appearance-none pr-6">
+                <option className="bg-[#0c0c0c]" value="static">Static (Hold)</option>
+                <option className="bg-[#0c0c0c]" value="slow_zoom">Slow Zoom</option>
+              </select>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 1L5 5L9 1" stroke="#888888" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
             </div>
-          )}
+          </div>
 
           {/* Intensity */}
-          {videoPreview && (
-            <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-              <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Intensity</span>
-              <input type="range" min="0" max="2" step="0.05" value={intensityScale} onChange={(e) => { setIntensityScale(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
-              <span className="text-[8px] font-mono text-[#888888] w-8 text-right">{intensityScale.toFixed(2)}x</span>
-            </div>
-          )}
+          <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+            <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Intensity</span>
+            <input type="range" min="0" max="2" step="0.05" value={intensityScale} onChange={(e) => { setIntensityScale(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
+            <span className="text-[8px] font-mono text-[#888888] w-8 text-right">{intensityScale.toFixed(2)}x</span>
+          </div>
 
           {/* Base Zoom */}
-          {videoPreview && (
-            <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-              <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Base</span>
-              <input type="range" min="1" max="1.3" step="0.01" value={baseZoom}
-                onChange={(e) => { setBaseZoom(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
-              <span className="text-[8px] font-mono text-[#888888] w-8 text-right">{baseZoom.toFixed(2)}x</span>
-            </div>
-          )}
+          <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+            <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Base</span>
+            <input type="range" min="1" max="1.3" step="0.01" value={baseZoom}
+              onChange={(e) => { setBaseZoom(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
+            <span className="text-[8px] font-mono text-[#888888] w-8 text-right">{baseZoom.toFixed(2)}x</span>
+          </div>
 
           {/* Speed */}
-          {videoPreview && (
-            <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-              <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Speed</span>
-              <input type="range" min="0" max="1" step="0.05" value={snapSpeed}
-                onChange={(e) => { setSnapSpeed(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
-              <span className="text-[8px] font-mono text-[#888888] w-10 text-right">{snapSpeed >= 0.95 ? 'SNAP' : `${((1 - snapSpeed) * 400).toFixed(0)}ms`}</span>
-            </div>
-          )}
+          <div className="flex items-center space-x-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+            <span className="text-[7px] uppercase tracking-[0.3em] text-white/30 font-bold whitespace-nowrap">Speed</span>
+            <input type="range" min="0" max="1" step="0.05" value={snapSpeed}
+              onChange={(e) => { setSnapSpeed(parseFloat(e.target.value)); setActivePreset('custom'); }} className="flex-1 accent-[#888888]" />
+            <span className="text-[8px] font-mono text-[#888888] w-10 text-right">{snapSpeed >= 0.95 ? 'SNAP' : `${((1 - snapSpeed) * 400).toFixed(0)}ms`}</span>
+          </div>
 
           {/* Advanced Timeline moved up */}
 
