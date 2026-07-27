@@ -559,7 +559,7 @@ export default function Home() {
             </button>
           </form>
         </main>
-        <LabelFooter />
+
       </div>
     );
   }
